@@ -97,6 +97,8 @@
     .event-list li {
       list-style: none;
       margin-bottom: 10px;
+      display: flex;
+      align-items: center;
     }
 
     .clear-button {
@@ -106,6 +108,16 @@
       padding: 10px;
       cursor: pointer;
       margin-top: 10px;
+    }
+
+    /* 新しいスタイル */
+    .event-list input[type="checkbox"] {
+      margin-right: 10px;
+    }
+
+    .checked {
+      color: red;
+      text-decoration: line-through;
     }
   </style>
 </head>
@@ -286,12 +298,28 @@
 
       savedContentKeys.forEach(contentKey => {
         const li = document.createElement("li");
-        li.textContent = `${contentKey}: ${localStorage.getItem(contentKey)}`;
-        
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.addEventListener("change", () => toggleContentChecked(contentKey, checkbox));
+        li.appendChild(checkbox);
+
+        const contentText = document.createElement("span");
+        contentText.textContent = `${contentKey}: ${localStorage.getItem(contentKey)}`;
+        li.appendChild(contentText);
+
         ul.appendChild(li);
       });
 
       eventListContainer.appendChild(ul);
+    }
+  }
+
+  function toggleContentChecked(contentKey, checkbox) {
+    const contentText = checkbox.nextSibling;
+    if (checkbox.checked) {
+      contentText.classList.add("checked");
+    } else {
+      contentText.classList.remove("checked");
     }
   }
 
