@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To Do List カレンダー</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .calendar-container {
+      max-width: 1000px;
+      margin: 20px auto;
+    }
+
+    .month-navigation {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+      position: relative;
+      cursor: pointer;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .event-popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      display: none;
+      z-index: 2;
+    }
+
+    .event-popup input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    .event-popup button {
+      padding: 5px 10px;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+
+    .today {
+      background-color: #ffc107;
+    }
+
+    .has-content {
+      background-color: #aaffa4;
+    }
+
+    .today.has-content {
+      background-color: #ffdb58;
+    }
+
+    .delete-button {
+      background-color: #ff6666;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .edit-button {
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .event-list {
+      margin-top: 20px;
+    }
+
+    .event-list li {
+      list-style: none;
+      margin-bottom: 10px;
+    }
+
+    .clear-button {
+      background-color: #ff6666;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="calendar-container">
+  <h2>To Do List</h2>
+
+  <div class="month-navigation">
+    <button onclick="changeMonth(-1)">前の月</button>
+    <span id="currentMonth"></span>
+    <button onclick="changeMonth(1)">次の月</button>
+  </div>
+
+  <table id="calendar">
+    <thead>
+      <tr>
+        <th>日</th>
+        <th>月</th>
+        <th>火</th>
+        <th>水</th>
+        <th>木</th>
+        <th>金</th>
+        <th>土</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- カレンダーの日付はここに挿入されます -->
+    </tbody>
+  </table>
+</div>
+
+<div class="event-popup" id="eventPopup">
+  <label for="popupContent">内容入力:</label>
+  <input type="text" id="popupContent" placeholder="内容を入力">
+  <button onclick="saveEvent()">保存</button>
+  <button onclick="deleteEvent()">削除</button>
+  <button onclick="closePopup()">閉じる</button>
+</div>
+
+<div class="event-list" id="eventList">
+  <h3>保存した内容リスト</h3>
+  <!-- 保存した内容がここに挿入されます -->
+</div>
+
+<button class="clear-button" onclick="clearAllEvents()">保存した内容をクリア</button>
+
+<script>
+  const originalCalendarData = {}; // 初期カレンダーデータの保存用
+  let currentYear, currentMonth;
+
+  function createCalendar(year, month) {
+    currentYear = year;
+    currentMonth = month;
+
+    updateMonthDisplay();
+
+    const tableBody = document.querySelector("#calendar tbody");
+    tableBody.innerHTML = '';
+
+    let date = 1;
+
+    for (let i = 0; i < 6; i++) {
+      const row = document.createElement("tr");
+
+      for (let j = 0; j < 7; j++) {
+        const cell = document.createElement("td");
+
+        if (i === 0 && j < getFirstDayOfMonth(year, month)) {
+          // 空白セル
+        } else if (date > getDaysInMonth(year, month)) {
+          // 空白セル
+        } else {
+          cell.textContent = date;
+          cell.addEventListener("click", () => showEventPopup(year, month, date, cell));
+          date++;
+
+          const today = new Date();
+          if (
+            year === today.getFullYear() &&
+            month === today.getMonth() + 1 &&
+            date - 1 === today.getDate()
+          ) {
+            cell.classList.add("today");
+
+            if (hasContent(year, month, date - 1)) {
+              cell.classList.add("has-content");
+            }
+          } else {
+            if (hasContent(year, month, date - 1)) {
+              cell.classList.add("has-content");
+            }
+          }
+        }
+
+        row.appendChild(cell);
+      }
+
+      tableBody.appendChild(row);
+    }
+  }
+
+  function updateMonthDisplay() {
+    const currentMonthElement = document.getElementById("currentMonth");
+    if (currentMonthElement) {
+      currentMonthElement.textContent = `${currentYear}年 ${currentMonth}月`;
+    }
+  }
+
+  function getFirstDayOfMonth(year, month) {
+    return new Date(year, month - 1, 1).getDay();
+  }
+
+  function getDaysInMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+  }
+
+  function hasContent(year, month, date) {
+    const contentKey = `${year}-${month.toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+    return localStorage.getItem(contentKey) !== null;
+  }
+
+  function showEventPopup(year, month, date, cell) {
+    const popupContentInput = document.getElementById("popupContent");
+
+    popupContentInput.value = '';
+
+    document.querySelector(".event-popup").style.display = "block";
+
+    document.querySelectorAll("td.selected").forEach(selectedCell => selectedCell.classList.remove("selected", "current-input"));
+
+    cell.classList.add("selected", "current-input");
+  }
+
+  function saveEvent() {
+    const popupContentInput = document.getElementById("popupContent");
+
+    const selectedCell = document.querySelector("td.selected");
+    if (selectedCell) {
+      selectedCell.classList.add("has-content");
+      const contentKey = `${selectedCell.textContent}日`;
+      localStorage.setItem(contentKey, popupContentInput.value);
+      selectedCell.classList.remove("selected", "current-input");
+
+      updateEventList();
+    }
+
+    closePopup();
+  }
+
+  function deleteEvent() {
+    const selectedCell = document.querySelector("td.selected");
+    if (selectedCell) {
+      const contentKey = `${selectedCell.textContent}日`;
+      localStorage.removeItem(contentKey);
+      selectedCell.classList.remove("has-content", "selected", "current-input");
+
+      updateEventList();
+    }
+
+    closePopup();
+  }
+
+  function closePopup() {
+    document.querySelector(".event-popup").style.display = "none";
+  }
+
+  function updateEventList() {
+    const eventListContainer = document.getElementById("eventList");
+    const savedContentKeys = Object.keys(localStorage);
+
+    eventListContainer.innerHTML = '<h3>保存した内容リスト</h3>';
+
+    if (savedContentKeys.length === 0) {
+      eventListContainer.innerHTML += '<p>保存された内容はありません。</p>';
+    } else {
+      const ul = document.createElement("ul");
+
+      savedContentKeys.forEach(contentKey => {
+        const li = document.createElement("li");
+        li.textContent = `${contentKey}: ${localStorage.getItem(contentKey)}`;
+        
+        ul.appendChild(li);
+      });
+
+      eventListContainer.appendChild(ul);
+    }
+  }
+
+  function clearAllEvents() {
+    localStorage.clear();
+    updateEventList();
+    const selectedCell = document.querySelector("td.selected");
+    if (selectedCell) {
+      selectedCell.classList.remove("selected", "current-input", "has-content");
+    }
+
+    // 初期カレンダーデータでカレンダーを再構築
+    const currentDate = new Date();
+    createCalendar(currentDate.getFullYear(), currentDate.getMonth() + 1);
+    originalCalendarData = {}; // 初期カレンダーデータをクリア
+  }
+
+  function changeMonth(offset) {
+    const newMonth = currentMonth + offset;
+    if (newMonth >= 1 && newMonth <= 12) {
+      createCalendar(currentYear, newMonth);
+    }
+  }
+
+  const currentDate = new Date();
+  createCalendar(currentDate.getFullYear(), currentDate.getMonth() + 1);
+  updateEventList();
+</script>
+
+</body>
+</html>
