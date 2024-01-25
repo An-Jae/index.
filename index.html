@@ -203,11 +203,13 @@
           ) {
             cell.classList.add("today");
 
-            if (hasContent(year, month, date - 1)) {
+            const contentKeys = getContentKeys(year, month, date - 1);
+            if (contentKeys.length > 0) {
               cell.classList.add("has-content");
             }
           } else {
-            if (hasContent(year, month, date - 1)) {
+            const contentKeys = getContentKeys(year, month, date - 1);
+            if (contentKeys.length > 0) {
               cell.classList.add("has-content");
             }
           }
@@ -236,8 +238,14 @@
   }
 
   function hasContent(year, month, date) {
-    const contentKey = `${year}-${month.toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
-    return localStorage.getItem(contentKey) !== null;
+    const contentKeys = getContentKeys(year, month, date);
+    return contentKeys.length > 0;
+  }
+
+  function getContentKeys(year, month, date) {
+    const contentKeyPrefix = `${year}-${month.toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+    const contentKeys = Object.keys(localStorage).filter(key => key.startsWith(contentKeyPrefix));
+    return contentKeys;
   }
 
   function showEventPopup(year, month, date, cell) {
@@ -250,6 +258,8 @@
     document.querySelectorAll("td.selected").forEach(selectedCell => selectedCell.classList.remove("selected", "current-input"));
 
     cell.classList.add("selected", "current-input");
+
+    updateEventList(year, month, date);
   }
 
   function saveEvent() {
@@ -258,11 +268,15 @@
     const selectedCell = document.querySelector("td.selected");
     if (selectedCell) {
       selectedCell.classList.add("has-content");
-      const contentKey = `${selectedCell.textContent}日`;
+
+      const contentKeyPrefix = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-${selectedCell.textContent.padStart(2, '0')}`;
+      const contentKeys = getContentKeys(currentYear, currentMonth, parseInt(selectedCell.textContent));
+      const contentKey = `${contentKeyPrefix}-${contentKeys.length + 1}`;
+
       localStorage.setItem(contentKey, popupContentInput.value);
       selectedCell.classList.remove("selected", "current-input");
 
-      updateEventList();
+      updateEventList(currentYear, currentMonth, parseInt(selectedCell.textContent));
     }
 
     closePopup();
@@ -271,11 +285,17 @@
   function deleteEvent() {
     const selectedCell = document.querySelector("td.selected");
     if (selectedCell) {
-      const contentKey = `${selectedCell.textContent}日`;
-      localStorage.removeItem(contentKey);
+      const contentKeyPrefix = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-${selectedCell.textContent.padStart(2, '0')}`;
+      const contentKeys = getContentKeys(currentYear, currentMonth, parseInt(selectedCell.textContent));
+
+      if (contentKeys.length > 0) {
+        const contentKey = contentKeys[contentKeys.length - 1];
+        localStorage.removeItem(contentKey);
+      }
+
       selectedCell.classList.remove("has-content", "selected", "current-input");
 
-      updateEventList();
+      updateEventList(currentYear, currentMonth, parseInt(selectedCell.textContent));
     }
 
     closePopup();
@@ -285,11 +305,11 @@
     document.querySelector(".event-popup").style.display = "none";
   }
 
-  function updateEventList() {
+  function updateEventList(year, month, date) {
     const eventListContainer = document.getElementById("eventList");
-    const savedContentKeys = Object.keys(localStorage);
+    const savedContentKeys = getContentKeys(year, month, date);
 
-    eventListContainer.innerHTML = '<h3>保存した内容リスト</h3>';
+    eventListContainer.innerHTML = `<h3>保存した内容リスト</h3>`;
 
     if (savedContentKeys.length === 0) {
       eventListContainer.innerHTML += '<p>保存された内容はありません。</p>';
@@ -325,7 +345,7 @@
 
   function clearAllEvents() {
     localStorage.clear();
-    updateEventList();
+    updateEventList(currentYear, currentMonth, 0);
     const selectedCell = document.querySelector("td.selected");
     if (selectedCell) {
       selectedCell.classList.remove("selected", "current-input", "has-content");
@@ -346,7 +366,7 @@
 
   const currentDate = new Date();
   createCalendar(currentDate.getFullYear(), currentDate.getMonth() + 1);
-  updateEventList();
+  updateEventList(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 </script>
 
 </body>
