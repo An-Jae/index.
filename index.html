@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>To Do List カレンダー</title>
   <style>
-    body {
+      body {
       font-family: Arial, sans-serif;
     }
 
@@ -123,44 +123,51 @@
 </head>
 <body>
 
-<div class="calendar-container">
-  <h2>To Do List</h2>
-
-  <div class="month-navigation">
-    <button onclick="changeMonth(-1)">前の月</button>
-    <span id="currentMonth"></span>
-    <button onclick="changeMonth(1)">次の月</button>
+  <div class="calendar-container">
+    <h2>To Do List</h2>
+  
+    <div class="month-navigation">
+      <button onclick="changeMonth(-1)">前の月</button>
+      <span id="currentMonth"></span>
+      <button onclick="changeMonth(1)">次の月</button>
+    </div>
+  
+    <table id="calendar">
+      <thead>
+        <tr>
+          <th>日</th>
+          <th>月</th>
+          <th>火</th>
+          <th>水</th>
+          <th>木</th>
+          <th>金</th>
+          <th>土</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- カレンダーの日付はここに挿入されます -->
+      </tbody>
+    </table>
   </div>
 
-  <table id="calendar">
-    <thead>
-      <tr>
-        <th>日</th>
-        <th>月</th>
-        <th>火</th>
-        <th>水</th>
-        <th>木</th>
-        <th>金</th>
-        <th>土</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- カレンダーの日付はここに挿入されます -->
-    </tbody>
-  </table>
-</div>
-
-<div class="event-popup" id="eventPopup">
-  <label for="popupContent">内容入力:</label>
-  <input type="text" id="popupContent" placeholder="内容を入力">
-  <button onclick="saveEvent()">保存</button>
-  <button onclick="deleteEvent()">削除</button>
-  <button onclick="closePopup()">閉じる</button>
-</div>
+  <div class="event-popup" id="eventPopup">
+    <label for="popupContent">内容入力:</label>
+    <input type="text" id="popupContent" placeholder="内容を入力">
+    <button onclick="saveEvent()">保存</button>
+    <button onclick="deleteEvent()">削除</button>
+    <button onclick="closePopup()">閉じる</button>
+  </div>
 
 <div class="event-list" id="eventList">
   <h3>保存した内容リスト</h3>
   <!-- 保存した内容がここに挿入されます -->
+</div>
+
+<div class="all-events-container">
+  <h3>全ての保存内容リスト</h3>
+  <ul id="allEventsList">
+    <!-- 保存されたすべての内容がここに挿入されます -->
+  </ul>
 </div>
 
 <button class="clear-button" onclick="clearAllEvents()">保存した内容をクリア</button>
@@ -277,6 +284,7 @@
       selectedCell.classList.remove("selected", "current-input");
 
       updateEventList(currentYear, currentMonth, parseInt(selectedCell.textContent));
+      updateAllEventsList(); // 全ての内容リストも更新
     }
 
     closePopup();
@@ -296,6 +304,7 @@
       selectedCell.classList.remove("has-content", "selected", "current-input");
 
       updateEventList(currentYear, currentMonth, parseInt(selectedCell.textContent));
+      updateAllEventsList(); // 全ての内容リストも更新
     }
 
     closePopup();
@@ -343,6 +352,27 @@
     }
   }
 
+  function updateAllEventsList() {
+    const allEventsListContainer = document.getElementById("allEventsList");
+    allEventsListContainer.innerHTML = '';
+
+    const allContentKeys = Object.keys(localStorage);
+
+    if (allContentKeys.length === 0) {
+      allEventsListContainer.innerHTML += '<p>保存された内容はありません。</p>';
+    } else {
+      const ul = document.createElement("ul");
+
+      allContentKeys.forEach(contentKey => {
+        const li = document.createElement("li");
+        li.textContent = `${contentKey}: ${localStorage.getItem(contentKey)}`;
+        ul.appendChild(li);
+      });
+
+      allEventsListContainer.appendChild(ul);
+    }
+  }
+
   function clearAllEvents() {
     localStorage.clear();
     updateEventList(currentYear, currentMonth, 0);
@@ -355,6 +385,7 @@
     const currentDate = new Date();
     createCalendar(currentDate.getFullYear(), currentDate.getMonth() + 1);
     originalCalendarData = {}; // 初期カレンダーデータをクリア
+    updateAllEventsList(); // 全ての内容リストも更新
   }
 
   function changeMonth(offset) {
@@ -367,6 +398,7 @@
   const currentDate = new Date();
   createCalendar(currentDate.getFullYear(), currentDate.getMonth() + 1);
   updateEventList(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  updateAllEventsList(); // 初期表示時に全ての内容リストも更新
 </script>
 
 </body>
