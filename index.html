@@ -278,15 +278,10 @@
           contentText.textContent = `${dateStr}: ${contentData.content} (${contentData.time})`;
           li.appendChild(contentText);
 
-          const editDeleteContainer = document.createElement("div");
-          editDeleteContainer.classList.add("edit-delete-buttons");
-
           const deleteButton = document.createElement("button");
           deleteButton.textContent = "削除";
           deleteButton.addEventListener("click", () => deleteEvent(contentKey));
-          editDeleteContainer.appendChild(deleteButton);
-
-          li.appendChild(editDeleteContainer);
+          li.appendChild(deleteButton);
 
           ul.appendChild(li);
         });
@@ -328,6 +323,7 @@
 
     const currentDate = new Date();
     createCalendar(currentDate.getFullYear(), currentDate.getMonth() + 1);
+    updateAllEventsList(); // 初期表示時に全ての内容リストも更新
   </script>
 
 </body>
