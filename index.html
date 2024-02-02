@@ -131,7 +131,7 @@
     <select id="hourSelect"></select>
     <span>:</span>
     <select id="minuteSelect"></select>
-    <button onclick="selectTime()">選択</button>
+    <button onclick="selectTime()">선택</button>
   </div>
 
   <div class="all-events-container">
@@ -147,14 +147,14 @@
     const originalCalendarData = {}; // 初期カレンダーデータの保存用
     let currentYear, currentMonth;
 
-  function showTimePicker() {
+    function showTimePicker() {
     const timePicker = document.getElementById("timePicker");
     timePicker.style.display = "block";
 
     const hourSelect = document.getElementById("hourSelect");
     const minuteSelect = document.getElementById("minuteSelect");
 
-    // 時間の選択肢を追加
+    // 시간의 선택지를 추가
     for (let hour = 0; hour < 24; hour++) {
       const option = document.createElement("option");
       option.value = hour;
@@ -162,7 +162,7 @@
       hourSelect.add(option);
     }
 
-    // 分の選択肢を追加（30分ごと）
+    // 분의 선택지를 추가 (30분 간격)
     for (let minute = 0; minute < 60; minute += 30) {
       const option = document.createElement("option");
       option.value = minute;
@@ -180,7 +180,7 @@
     const selectedMinute = minuteSelect.value;
 
     const formattedTime = `${selectedHour.toString().padStart(2, '0')}:${selectedMinute.toString().padStart(2, '0')}`;
-    
+
     popupDateTimeInput.value = formattedTime;
     closeTimePicker();
   }
